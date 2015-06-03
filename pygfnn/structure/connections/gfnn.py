@@ -23,6 +23,10 @@ class GFNNExtConnection(FullConnection):
         n = self.outmod
         outbuf += np.sum(inbuf)
 
+    def _backwardImplementation(self, outerr, inerr, inbuf):
+        #CHECKME: not setting derivatives -- this means the multiplicative weight is never updated!
+        inerr += 0
+
 class GFNNIntConnection(FullNotSelfConnection):
     """"""
 
@@ -118,6 +122,10 @@ class GFNNIntConnection(FullNotSelfConnection):
 
     def _forwardImplementation(self, inbuf, outbuf):
         outbuf += inbuf
+
+    def _backwardImplementation(self, outerr, inerr, inbuf):
+        #CHECKME: not setting derivatives -- this means the multiplicative weight is never updated!
+        inerr += 0
 
     def _backwardImplementation(self, outerr, inerr, inbuf):
         p = reshape(self.params, (self.outdim, self.indim)) * self.mask

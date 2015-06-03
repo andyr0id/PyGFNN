@@ -15,8 +15,6 @@ import pygfnn.tools.shortcuts as gfnn
 import numpy as np
 import timeit
 import matplotlib.pyplot as plt
-import time
-import scipy.io as sio
 
 if __name__ == '__main__':
     # Choose network parameters (see pygfnn.tools.shortcuts for more)

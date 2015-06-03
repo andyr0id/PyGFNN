@@ -149,7 +149,7 @@ class GFNNLayer(NeuronLayer):
         outbuf[:] = z
 
     def _backwardImplementation(self, outerr, inerr, outbuf, inbuf):
-        inerr[:] = outerr
+        inerr[:] = 0
 
 if __name__ == "__main__":
     from pybrain.tests import runModuleTestSuite
