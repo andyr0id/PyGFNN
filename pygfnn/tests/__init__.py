@@ -1,0 +1,1 @@
+from pybrain.tests import runModuleTestSuite

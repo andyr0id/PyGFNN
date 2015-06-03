@@ -1,0 +1,1 @@
+from pygfnn.structure.networks.gfnn import GFNN

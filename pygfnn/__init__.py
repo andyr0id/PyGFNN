@@ -1,0 +1,1 @@
+from pygfnn.structure.__init__ import *

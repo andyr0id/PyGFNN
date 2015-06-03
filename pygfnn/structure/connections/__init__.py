@@ -1,0 +1,6 @@
+from realidentity import RealIdentityConnection
+from absidentity import AbsIdentityConnection
+from meanfield import MeanFieldConnection
+from realmeanfield import RealMeanFieldConnection
+from absmeanfield import AbsMeanFieldConnection
+from gfnn import GFNNIntConnection, GFNNExtConnection
