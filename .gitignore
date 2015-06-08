@@ -3,3 +3,4 @@ build.bat
 build
 dist
 *.mat
+*.pyc

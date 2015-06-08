@@ -13,6 +13,7 @@ class GFNNLayer(NeuronLayer):
     """
 
     oscParams = None
+    freqDist = None
     fs = 60.
     dt = 0.01667
     t = 0.
@@ -44,7 +45,7 @@ class GFNNLayer(NeuronLayer):
 
         self.conns = []
 
-        self.setArgs(dim=dim, oscParams=oscParams)
+        self.setArgs(dim=dim, oscParams=oscParams, freqDist=freqDist)
 
         self.setFreqs(freqDist)
 

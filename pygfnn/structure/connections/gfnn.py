@@ -30,6 +30,7 @@ class GFNNExtConnection(FullConnection):
 class GFNNIntConnection(FullNotSelfConnection):
     """"""
 
+    learnParams = None
     type = None
     f = None
     learn = False
@@ -59,6 +60,7 @@ class GFNNIntConnection(FullNotSelfConnection):
 
         learnParams['type'] = 'allfreq' # only supported type for now
 
+        self.setArgs(learnParams=learnParams, c0=c0)
         self.setLearnParams(learnParams)
         if c0 is not None:
             self.c0 = np.complex64(c0)
