@@ -12,12 +12,12 @@ from pygfnn.structure.modules.gfnn import GFNNLayer
 
 import numpy as np
 
-class GFNNExtConnection(FullConnection):
+class GFNNExtConnection(Connection):
 
     def __init__(self, inmod, outmod, **kwargs):
         # 1st inputs are for external connection
         kwargs['outSliceTo'] = outmod.dim
-        FullConnection.__init__(self, inmod, outmod, **kwargs)
+        Connection.__init__(self, inmod, outmod, **kwargs)
 
     def _forwardImplementation(self, inbuf, outbuf):
         n = self.outmod
@@ -27,7 +27,7 @@ class GFNNExtConnection(FullConnection):
         #CHECKME: not setting derivatives -- this means the multiplicative weight is never updated!
         inerr += 0
 
-class GFNNIntConnection(FullNotSelfConnection):
+class GFNNIntConnection(Connection):
     """"""
 
     learnParams = None
@@ -70,12 +70,12 @@ class GFNNIntConnection(FullNotSelfConnection):
             # This could be inverted guassian too
             self.mask = 1-eye(self.outdim, self.indim)
 
-        ParameterContainer.__init__(self, self.indim*self.outdim)
-
-        self.c *= self.mask
-        self.c0 *= self.mask
+        # ParameterContainer.__init__(self, self.indim*self.outdim)
         self.k *= self.mask
         self.kSteps = np.zeros((4, self.outdim, self.indim), np.complex64)
+
+        self.randomize()
+        self.reset()
 
     def setLearnParams(self, learnParams):
         n1 = self.inmod
@@ -109,9 +109,9 @@ class GFNNIntConnection(FullNotSelfConnection):
         self.roote = np.sqrt(self.e)
 
     def randomize(self):
-        FullNotSelfConnection.randomize(self)
+        # FullNotSelfConnection.randomize(self)
         size = np.size(self.f)
-        self._params[:] = np.ones(size)*self.stdParams
+        # self._params[:] = np.ones(size)*self.stdParams
         if self.c0 is None:
             a0 = np.zeros(size)
             a = spontAmp(np.real(self.l[0,0]), np.real(self.m1[0,0]), np.real(self.m2[0,0]), self.e)
@@ -120,6 +120,10 @@ class GFNNIntConnection(FullNotSelfConnection):
             theta0 = np.random.randn(size)
             c0 = a0 * np.exp(1j * 2 * np.pi * theta0)
             self.c0 = reshape(c0, (self.outdim, self.indim))
+
+        self.c0 *= self.mask
+
+    def reset(self):
         self.c[:] = self.c0
 
     def _forwardImplementation(self, inbuf, outbuf):

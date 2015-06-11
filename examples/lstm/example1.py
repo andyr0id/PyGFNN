@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 __author__ = 'Andrew J. Lambert, andy@andyroid.co.uk'
 
-from pybrain import LSTMLayer, LinearLayer, FullConnection
+from pybrain import LSTMLayer, LinearLayer, FullConnection, BiasUnit
 from pybrain.datasets.sequential import SequentialDataSet
 from pybrain.supervised import RPropMinusTrainer
 from pygfnn import GFNN, GFNNLayer, GFNNExtConnection, GFNNIntConnection, RealMeanFieldConnection
@@ -41,10 +41,22 @@ def buildGFNNLSTM(gfnnDim, lstmDim, **options):
     o = LinearLayer(1, name = 'o')
     n.addOutputModule(o)
 
+    # bias
+    b = BiasUnit(name='b')
+    n.addModule(b)
+
     # hidden
     gfnn = GFNNLayer(gfnnDim, oscParams = opt['oscParams'],
         freqDist = opt['freqDist'], name = 'gfnn')
     n.addModule(gfnn)
+
+    if issubclass(opt['interConn'], RealMeanFieldConnection):
+        interDim = 1
+    else:
+        interDim = gfnnDim
+    print(interDim)
+    inter = LinearLayer(interDim, name = 'inter')
+    n.addModule(inter)
 
     lstm = LSTMLayer(lstmDim, peepholes = True, name = 'lstm')
     n.addModule(lstm)
@@ -58,11 +70,23 @@ def buildGFNNLSTM(gfnnDim, lstmDim, **options):
             learnParams = opt['learnParams'], c0 = opt['c0'],
             name = 'grc'))
 
-    # gfnn -> lstm
-    n.addConnection(opt['interConn'](gfnn, lstm, name = 'glc'))
+    # gfnn -> inter
+    n.addConnection(opt['interConn'](gfnn, inter, name = 'gxc'))
+
+    # inter -> lstm
+    n.addConnection(FullConnection(inter, lstm, name = 'xlc'))
+
+    # lstm -> lstm
+    n.addRecurrentConnection(FullConnection(lstm, lstm, name = 'lrc'))
+
+    # bias -> lstm
+    n.addConnection(FullConnection(b, lstm, name = 'blc'))
 
     # lstm -> output
     n.addConnection(FullConnection(lstm, o, name = 'loc'))
+
+    # bias -> output
+    n.addConnection(FullConnection(b, lstm))
 
     n.sortModules()
     return n
