@@ -49,3 +49,8 @@ if __name__ == '__main__':
         sio.savemat('example1P-C3.mat', { 'C3': c3 })
         ampFig, phaseFig = plotConns(n.recurrentConns[0].c, freqDist['min'], freqDist['max'])
         plt.show()
+
+        # resetting the network resets the connection matrix
+        n.reset()
+        ampFig, phaseFig = plotConns(n.recurrentConns[0].c, freqDist['min'], freqDist['max'])
+        plt.show()

@@ -4,7 +4,7 @@ __author__ = 'Andrew J. Lambert, andy@andyroid.co.uk'
 from pybrain import LSTMLayer, LinearLayer, FullConnection, BiasUnit
 from pybrain.datasets.sequential import SequentialDataSet
 from pybrain.supervised import RPropMinusTrainer
-from pygfnn import GFNN, GFNNLayer, GFNNExtConnection, GFNNIntConnection, RealMeanFieldConnection
+from pygfnn import GFNN, GFNNLayer, GFNNExtConnection, GFNNIntConnection, RealMeanFieldConnection, MeanFieldConnection
 
 import pygfnn.tools.shortcuts as gfnn
 import numpy as np
@@ -50,11 +50,10 @@ def buildGFNNLSTM(gfnnDim, lstmDim, **options):
         freqDist = opt['freqDist'], name = 'gfnn')
     n.addModule(gfnn)
 
-    if issubclass(opt['interConn'], RealMeanFieldConnection):
+    if issubclass(opt['interConn'], MeanFieldConnection):
         interDim = 1
     else:
         interDim = gfnnDim
-    print(interDim)
     inter = LinearLayer(interDim, name = 'inter')
     n.addModule(inter)
 

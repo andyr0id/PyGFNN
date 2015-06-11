@@ -21,3 +21,10 @@ class GFNN(RecurrentNetwork):
         if isinstance(m, GFNNLayer):
             m.fs = self.fs
             m.dt = self.dt
+
+    def reset(self):
+        """Reset all component modules and the network."""
+        RecurrentNetwork.reset(self)
+        for c in self.recurrentConns:
+            if isinstance(c, GFNNIntConnection):
+                c.reset()
