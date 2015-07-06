@@ -25,6 +25,7 @@ def buildGFNN(dim, **options):
         'learnParams': None,
         'c0': None,
         'outConn': RealIdentityConnection,
+        'outDim': 1,
     }
     for key in options:
         if key not in opt.keys():
@@ -38,10 +39,10 @@ def buildGFNN(dim, **options):
         oscParams = opt['oscParams'], freqDist = opt['freqDist'], name = 'h')
 
     if issubclass(opt['outConn'], RealMeanFieldConnection):
-        outdim = 1
+        outDim = opt['outDim']
     else:
-        outdim = dim
-    o = LinearLayer(outdim, name = 'o')
+        outDim = dim
+    o = LinearLayer(outDim, name = 'o')
 
     n.addInputModule(i)
     n.addOutputModule(o)
@@ -53,10 +54,27 @@ def buildGFNN(dim, **options):
             learnParams = opt['learnParams'], c0 = opt['c0'],
             name = 'rc'))
 
-    n.addConnection(opt['outConn'](h, o, name = 'oc'))
+
+    if issubclass(opt['outConn'], RealMeanFieldConnection):
+        hFrom = 0
+        oTo = 0
+        connPerInter = int(float(dim)/outDim)
+        for x in range(outDim):
+            hTo = min(hFrom+connPerInter, dim-1)
+            c = RealMeanFieldConnection(h, o, name='gxc'+`x`,
+                inSliceFrom=hFrom, inSliceTo=hTo,
+                outSliceFrom=oTo, outSliceTo=oTo)
+            n.addConnection(c)
+            hFrom = min(hFrom+connPerInter+1, dim-1)
+            oTo += 1
+    else:
+        n.addConnection(opt['outConn'](h, o, name = 'oc'))
     n.sortModules()
     return n
 
 if __name__ == '__main__':
-    n = buildGFNN(200)
+    n = buildGFNN(200, **{
+        'outConn': RealMeanFieldConnection,
+        'outDim': 8
+    })
     print(n)
