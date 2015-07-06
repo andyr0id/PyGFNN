@@ -56,16 +56,15 @@ def buildGFNN(dim, **options):
 
 
     if issubclass(opt['outConn'], RealMeanFieldConnection):
-        hFrom = 0
         oTo = 0
         connPerInter = int(float(dim)/outDim)
         for x in range(outDim):
+            hFrom = x * connPerInter
             hTo = min(hFrom+connPerInter, dim)
             c = RealMeanFieldConnection(h, o, name='gxc'+`x`,
                 inSliceFrom=hFrom, inSliceTo=hTo,
                 outSliceFrom=oTo, outSliceTo=oTo+1)
             n.addConnection(c)
-            hFrom = min(hFrom+connPerInter+1, dim-1)
             oTo += 1
     else:
         n.addConnection(opt['outConn'](h, o, name = 'oc'))
