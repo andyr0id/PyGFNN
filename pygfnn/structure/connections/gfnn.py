@@ -133,12 +133,6 @@ class GFNNIntConnection(Connection):
         #CHECKME: not setting derivatives -- this means the multiplicative weight is never updated!
         inerr += 0
 
-    def _backwardImplementation(self, outerr, inerr, inbuf):
-        p = reshape(self.params, (self.outdim, self.indim)) * self.mask
-        inerr += dot(p.T, outerr)
-        ds = self.derivs
-        ds += outer(inbuf, outerr).T.flatten()
-
 if __name__ == "__main__":
     # from pybrain.tests import runModuleTestSuite
     # import pygfnn.tests.unittests.structure.connections.test_gfnn_connections as test
