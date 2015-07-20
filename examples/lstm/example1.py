@@ -24,6 +24,7 @@ def buildGFNNLSTM(gfnnDim, lstmDim, **options):
         'learnParams': None,
         'c0': None,
         'interConn': RealMeanFieldConnection,
+        'gain': 100.0
     }
     for key in options:
         if key not in opt.keys():
@@ -70,7 +71,10 @@ def buildGFNNLSTM(gfnnDim, lstmDim, **options):
             name = 'grc'))
 
     # gfnn -> inter
-    n.addConnection(opt['interConn'](gfnn, inter, name = 'gxc'))
+    if issubclass(opt['interConn'], MeanFieldConnection):
+        n.addConnection(opt['interConn'](gfnn, inter, gain = opt['gain'], name = 'gxc'))
+    else:
+        n.addConnection(opt['interConn'](gfnn, inter, name = 'gxc'))
 
     # inter -> lstm
     n.addConnection(FullConnection(inter, lstm, name = 'xlc'))
@@ -103,7 +107,7 @@ def buildDS(n, num, dur):
         lastPulse = np.random.random() * p
         for j in range(length):
             if t[j] > lastPulse and t[j] >= lastPulse + p:
-                x[j] = 0.25
+                x[j] = 0.1
                 lastPulse = t[j]
             else:
                 if j > 0:

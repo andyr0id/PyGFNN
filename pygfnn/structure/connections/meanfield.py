@@ -1,18 +1,15 @@
 __author__ = 'Andrew J. Lambert, andy@andyroid.co.uk'
 
-from pybrain.structure.connections.connection import Connection
+from pygfnn.structure.connections.gain import GainConnection
 
 import numpy as np
 
-class MeanFieldConnection(Connection):
+class MeanFieldConnection(GainConnection):
     """Connection that just averages all the inputs before forwarding."""
 
-    def __init__(self, *args, **kwargs):
-        Connection.__init__(self, *args, **kwargs)
-
     def _forwardImplementation(self, inbuf, outbuf):
-        outbuf += np.mean(inbuf)
+        outbuf += np.mean(inbuf) * self.gain
 
     def _backwardImplementation(self, outerr, inerr, inbuf):
         #CHECKME: not setting derivatives
-        inerr += outerr
+        inerr += outerr / self.gain
