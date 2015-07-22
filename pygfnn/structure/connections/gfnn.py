@@ -63,7 +63,8 @@ class GFNNIntConnection(Connection):
         self.setArgs(learnParams=learnParams, c0=c0)
         self.setLearnParams(learnParams)
         if c0 is not None:
-            self.c0 = np.complex64(c0)
+            self.c0 = np.zeros((self.outdim, self.indim), np.complex64)
+            self.c0[:] = c0
         self.c = np.zeros((self.outdim, self.indim), np.complex64)
         if inmod == outmod:
             # Don't learn self-connections
