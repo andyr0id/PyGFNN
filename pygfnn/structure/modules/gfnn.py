@@ -49,14 +49,9 @@ class GFNNLayer(NeuronLayer):
 
         self.setFreqs(freqDist)
 
-        r0 = np.zeros(dim)
-        r = spontAmp(np.real(self.a[0]), np.real(self.b1[0]), np.real(self.b2[0]), self.e)
-        r0 = r[-1] + r0
-        r0 = r0 + .01 * np.random.randn(np.size(r0))
-        phi0 = 2 * np.pi * np.random.randn(np.size(r0))
-        z0 = np.complex64(r0 * np.exp(1j * 2 * np.pi * phi0))
-        self.z0 = z0
-        self.kSteps = np.zeros((4, z0.size), dtype=z0.dtype)
+        self.z0 = np.zeros(dim, dtype=np.complex64)
+        self._ranomiseOscs()
+        self.kSteps = np.zeros((4, dim), dtype=np.complex64)
         self.t = np.float32(0.)
 
     def setFreqs(self, freqDist):
@@ -97,7 +92,7 @@ class GFNNLayer(NeuronLayer):
                 return True
         return False
 
-    def reset(self):
+    def reset(self, randomiseOscs=True):
         """Set all buffers, past and present, to zero."""
         self.offset = 0
         for buffername, l  in self.bufferlist:
@@ -105,6 +100,16 @@ class GFNNLayer(NeuronLayer):
             buf = getattr(self, buffername)
             buf[:] = np.zeros(l, dtype=dtype)
         self.t = np.float32(0.)
+        if randomiseOscs:
+            self._ranomiseOscs()
+
+    def _ranomiseOscs(self):
+        r0 = np.zeros(self.outdim)
+        r = spontAmp(np.real(self.a[0]), np.real(self.b1[0]), np.real(self.b2[0]), self.e)
+        r0 = r[-1] + r0
+        r0 = r0 + .01 * np.random.randn(np.size(r0))
+        phi0 = 2 * np.pi * np.random.randn(np.size(r0))
+        self.z0[:] = np.complex64(r0 * np.exp(1j * 2 * np.pi * phi0))
 
     def _getDtype(self, buffername):
         if buffername == 'outputbuffer' or buffername == 'inputbuffer':

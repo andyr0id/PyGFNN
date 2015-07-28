@@ -1,5 +1,6 @@
 __author__ = 'Andrew J. Lambert, andy@andyroid.co.uk'
 
+from pybrain.structure.modules.module import Module
 from pybrain.structure.networks.recurrent import RecurrentNetwork
 from pygfnn.structure.modules.gfnn import GFNNLayer
 from pygfnn.structure.connections.gfnn import GFNNIntConnection
@@ -22,9 +23,14 @@ class GFNN(RecurrentNetwork):
             m.fs = self.fs
             m.dt = self.dt
 
-    def reset(self):
+    def reset(self, randomiseOscs=True):
         """Reset all component modules and the network."""
-        RecurrentNetwork.reset(self)
+        Module.reset(self)
+        for m in self.modules:
+            if isinstance(m, GFNNLayer):
+                m.reset(randomiseOscs)
+            else:
+                m.reset()
         for c in self.recurrentConns:
             if isinstance(c, GFNNIntConnection):
                 c.reset()

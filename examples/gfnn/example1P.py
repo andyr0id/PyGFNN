@@ -50,7 +50,7 @@ if __name__ == '__main__':
         ampFig, phaseFig = plotConns(n.recurrentConns[0].c, freqDist['min'], freqDist['max'])
         plt.show()
 
-        # resetting the network resets the connection matrix
+        # resetting the network resets the connection matrix to c0, and randomises z0
         n.reset()
         ampFig, phaseFig = plotConns(n.recurrentConns[0].c, freqDist['min'], freqDist['max'])
         plt.show()
