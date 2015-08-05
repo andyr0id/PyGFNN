@@ -25,6 +25,9 @@ if __name__ == '__main__':
     n = gfnn.buildGFNN(200, oscParams = oscParams, freqDist = freqDist,
         learnParams = learnParams)
 
+    # First plots, showing initial connection state
+    ampFig1, phaseFig1 = plotConns(n.recurrentConns[0].c, freqDist['min'], freqDist['max'])
+
     # Stimulus - x seconds of silence
     t = np.arange(0, 10, n['h'].dt)
 
@@ -46,11 +49,13 @@ if __name__ == '__main__':
     print('Elapsed time is %f seconds' % (end - start))
 
     if learnParams is not None:
+        # See how the connections changed over time
         sio.savemat('example1P-C3.mat', { 'C3': c3 })
-        ampFig, phaseFig = plotConns(n.recurrentConns[0].c, freqDist['min'], freqDist['max'])
-        plt.show()
 
-        # resetting the network resets the connection matrix to c0, and randomises z0
+        # Second plots, showing final connection state
+        ampFig2, phaseFig2 = plotConns(n.recurrentConns[0].c, freqDist['min'], freqDist['max'])
+
+        # resetting the network resets the connection matrix to c0 (with random phase), and randomises z0
         n.reset()
-        ampFig, phaseFig = plotConns(n.recurrentConns[0].c, freqDist['min'], freqDist['max'])
+        ampFig3, phaseFig3 = plotConns(n.recurrentConns[0].c, freqDist['min'], freqDist['max'])
         plt.show()

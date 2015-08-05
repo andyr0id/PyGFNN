@@ -5,6 +5,8 @@ import pygfnn #@UnusedImport
 import pybrain #@UnusedImport
 from scipy import array #@UnusedImport
 from pybrain.tools.customxml import NetworkReader as PyBrainNetworkReader
+from numpy import ndarray, loadtxt, reshape
+from io import BytesIO
 
 class NetworkReader(PyBrainNetworkReader):
 
@@ -77,6 +79,11 @@ class NetworkReader(PyBrainNetworkReader):
                 res[str(c.nodeName)] = self.modules[val]
             elif val in self.mothers:
                 res[str(c.nodeName)] = self.mothers[val]
+            elif val == 'ndarray':
+                    valDtype = c.getAttribute('dtype')
+                    valShape = [int(x) for x in c.getAttribute('shape').split('x')]
+                    val = loadtxt(BytesIO(str(c.firstChild.data))).view(valDtype)
+                    res[str(c.nodeName)] = val.reshape(valShape)
             elif val != '':
                 res[str(c.nodeName)] = eval(val)
         return res

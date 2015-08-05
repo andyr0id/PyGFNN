@@ -23,14 +23,14 @@ class GFNN(RecurrentNetwork):
             m.fs = self.fs
             m.dt = self.dt
 
-    def reset(self, randomiseOscs=True):
+    def reset(self, randomizeOscs=True, randomizeConnPhase=True):
         """Reset all component modules and the network."""
         Module.reset(self)
         for m in self.modules:
             if isinstance(m, GFNNLayer):
-                m.reset(randomiseOscs)
+                m.reset(randomizeOscs)
             else:
                 m.reset()
         for c in self.recurrentConns:
             if isinstance(c, GFNNIntConnection):
-                c.reset()
+                c.reset(randomizeConnPhase)

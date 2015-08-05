@@ -118,14 +118,20 @@ class GFNNIntConnection(Connection):
             a = spontAmp(np.real(self.l[0,0]), np.real(self.m1[0,0]), np.real(self.m2[0,0]), self.e)
             a0 += np.min(a)
             a0 = a0 * (1 + .01 * np.random.randn(size))
-            theta0 = np.random.randn(size)
-            c0 = a0 * np.exp(1j * 2 * np.pi * theta0)
-            self.c0 = reshape(c0, (self.outdim, self.indim))
+            self.c0 = np.complex64(reshape(a0, (self.outdim, self.indim)))
+            self.c0[:] = self._randomizePhase(self.c0)
 
         self.c0 *= self.mask
 
-    def reset(self):
+    def reset(self, randomizePhase=True):
         self.c[:] = self.c0
+        if randomizePhase:
+            self.c[:] = self._randomizePhase(self.c)
+
+    def _randomizePhase(self, c):
+        theta0 = np.random.randn(self.outdim * self.indim)
+        theta0 = np.exp(1j * 2 * np.pi * theta0)
+        return c * reshape(theta0, (self.outdim, self.indim))
 
     def _forwardImplementation(self, inbuf, outbuf):
         outbuf += inbuf
