@@ -34,6 +34,7 @@ def ampx(Z, dt, startF, endF, fig1=None):
     ax1.set_yticks(ticks)
     ax1.set_yticklabels(labels)
 
+    plt.xlim((startT,endT))
     plt.title('Amplitudes of oscillators over time')
     plt.xlabel('Time (s)');
     plt.ylabel('Oscillator natural frequency (Hz)');
