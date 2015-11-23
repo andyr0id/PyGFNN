@@ -26,7 +26,7 @@ def ampx(Z, dt, startF, endF, fig1=None):
 
     startT = 0
     endT = len(Z)*dt
-    im1 = plt.imshow(np.abs(Z).T, extent=[startT,endT,startF,endF],
+    im1 = plt.imshow(np.flipud(np.abs(Z).T), extent=[startT,endT,startF,endF],
         aspect='auto', interpolation='nearest')
     ax1 = plt.gca()
     ax1.set_yscale('log')
@@ -36,6 +36,31 @@ def ampx(Z, dt, startF, endF, fig1=None):
 
     plt.xlim((startT,endT))
     plt.title('Amplitudes of oscillators over time')
+    plt.xlabel('Time (s)');
+    plt.ylabel('Oscillator natural frequency (Hz)');
+
+    cb = plt.colorbar()
+    cb.set_label('Amplitude')
+    return fig1
+
+def phasex(Z, dt, startF, endF, fig1=None):
+    if fig1 is not None:
+        plt.figure(fig1.number)
+    else:
+        fig1 = plt.figure()
+
+    startT = 0
+    endT = len(Z)*dt
+    im1 = plt.imshow(np.flipud(np.angle(Z).T), extent=[startT,endT,startF,endF],
+        aspect='auto', interpolation='nearest')
+    ax1 = plt.gca()
+    ax1.set_yscale('log')
+    ticks, labels = freqs2labels(startF, endF)
+    ax1.set_yticks(ticks)
+    ax1.set_yticklabels(labels)
+
+    plt.xlim((startT,endT))
+    plt.title('Phases of oscillators over time')
     plt.xlabel('Time (s)');
     plt.ylabel('Oscillator natural frequency (Hz)');
 

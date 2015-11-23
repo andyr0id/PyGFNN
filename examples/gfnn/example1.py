@@ -8,6 +8,7 @@ sets are provided for experimentation with different types of intrinsic
 oscillator dynamics.
 """
 
+from pybrain import IdentityConnection
 from pygfnn import AbsIdentityConnection
 from pygfnn.tools.plotting.gfnn import *
 import pygfnn.tools.shortcuts as gfnn
@@ -19,10 +20,11 @@ import matplotlib.pyplot as plt
 if __name__ == '__main__':
     # Choose network parameters (see pygfnn.tools.shortcuts for more)
     oscParams = gfnn.OSC_CRITICAL
-    freqDist = { 'fspac': 'log', 'min': 0.5, 'max': 2 }
+    freqDist = { 'fspac': 'log', 'min': 0.25, 'max': 4 }
+    fs = 40.
 
     # Make network
-    n = gfnn.buildGFNN(200, oscParams = oscParams, freqDist = freqDist,
+    n = gfnn.buildGFNN(200, fs = fs, oscParams = oscParams, freqDist = freqDist,
         outConn = AbsIdentityConnection)
 
     # Stimulus - 50 seconds of 1Hz sin
@@ -39,6 +41,8 @@ if __name__ == '__main__':
     end = timer()
     print('Elapsed time is %f seconds' % (end - start))
 
-    Z = n.outputbuffer[:n.offset]
+    print(n.offset, len(n.outputbuffer))
+    Z = n['h'].outputbuffer[:n.offset]
     fig1 = ampx(Z, n.dt, freqDist['min'], freqDist['max'])
+    fig2 = phasex(Z, n.dt, freqDist['min'], freqDist['max'])
     plt.show()
