@@ -41,7 +41,6 @@ if __name__ == '__main__':
     end = timer()
     print('Elapsed time is %f seconds' % (end - start))
 
-    print(n.offset, len(n.outputbuffer))
     Z = n['h'].outputbuffer[:n.offset]
     fig1 = ampx(Z, n.dt, freqDist['min'], freqDist['max'])
     fig2 = phasex(Z, n.dt, freqDist['min'], freqDist['max'])

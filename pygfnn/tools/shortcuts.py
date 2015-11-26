@@ -1,7 +1,7 @@
 __author__ = 'Andrew J. Lambert, andy@andyroid.co.uk'
 
 from pybrain import LinearLayer, FullConnection, FullNotSelfConnection, IdentityConnection
-from pygfnn import GFNN, GFNNLayer, GFNNExtConnection, GFNNIntConnection, RealIdentityConnection, RealMeanFieldConnection
+from pygfnn import GFNN, GFNNLayer, GFNNExtConnection, GFNNIntConnection, RealIdentityConnection, RealMeanFieldConnection, AbsPhaseIdentityConnection
 
 OSC_LINEAR = { 'a': -1, 'b1': 0, 'b2': 0, 'd1': 0, 'd2': 0, 'e': 1 }
 OSC_CRITICAL = { 'a': 0, 'b1': -1, 'b2': -1, 'd1': 0, 'd2': 0, 'e': 1 }
@@ -38,7 +38,7 @@ def buildGFNN(dim, **options):
     h = GFNNLayer(dim,
         oscParams = opt['oscParams'], freqDist = opt['freqDist'], name = 'h')
 
-    if issubclass(opt['outConn'], RealMeanFieldConnection):
+    if issubclass(opt['outConn'], RealMeanFieldConnection) or issubclass(opt['outConn'], AbsPhaseIdentityConnection):
         outDim = opt['outDim']
     else:
         outDim = dim

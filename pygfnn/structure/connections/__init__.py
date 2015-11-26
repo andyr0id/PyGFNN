@@ -1,6 +1,10 @@
 from realidentity import RealIdentityConnection
 from absidentity import AbsIdentityConnection
+from phaseidentity import PhaseIdentityConnection
+from absphaseidentity import AbsPhaseIdentityConnection
+from imagidentity import ImagIdentityConnection
 from meanfield import MeanFieldConnection
 from realmeanfield import RealMeanFieldConnection
 from absmeanfield import AbsMeanFieldConnection
+from imagmeanfield import ImagMeanFieldConnection
 from gfnn import GFNNIntConnection, GFNNExtConnection
