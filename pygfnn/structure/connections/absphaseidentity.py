@@ -15,4 +15,4 @@ class AbsPhaseIdentityConnection(GainConnection, IdentityConnection):
     def _forwardImplementation(self, inbuf, outbuf):
     	length = len(inbuf)
         outbuf[:length] += np.abs(inbuf) * self.gain
-        outbuf[length:length*2] += np.angle(inbuf) * self.gain
+        outbuf[length:length*2] += np.angle(inbuf)
