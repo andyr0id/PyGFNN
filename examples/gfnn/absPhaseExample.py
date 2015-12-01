@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 if __name__ == '__main__':
     # Choose network parameters (see pygfnn.tools.shortcuts for more)
     oscParams = gfnn.OSC_CRITICAL
-    freqDist = { 'fspac': 'log', 'min': 1.8, 'max': 2.2 }
+    freqDist = { 'fspac': 'log', 'min': 1.5, 'max': 2.5 }
     fs = 40.
     dur = 10
 
@@ -28,7 +28,7 @@ if __name__ == '__main__':
 
     # Stimulus - 50 seconds of 1Hz sin
     t = np.arange(0, dur, n['h'].dt)
-    x = np.sin(2 * np.pi * 1 * t) * 0.25
+    x = np.sin(2 * np.pi * 2 * t) * 0.25
 
     # Run the network
     timer = timeit.default_timer
