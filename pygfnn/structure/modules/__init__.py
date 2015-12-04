@@ -1,1 +1,1 @@
-from pygfnn.structure.modules.gfnn import GFNNLayer
+from pygfnn.structure.modules.gfnn import GFNNLayer, AFNNLayer

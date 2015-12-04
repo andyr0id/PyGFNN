@@ -2,7 +2,7 @@ __author__ = 'Andrew J. Lambert, andy@andyroid.co.uk'
 
 from pybrain.structure.modules.neuronlayer import NeuronLayer
 from pybrain.structure.modules.module import Module
-from pygfnn.tools.gfnn import zdot, spontAmp, rk4, zcrk4, limitC
+from pygfnn.tools.gfnn import fdot, zdot, spontAmp, rk4, zcrk4, limitC
 
 import numpy as np
 
@@ -19,6 +19,7 @@ class GFNNLayer(NeuronLayer):
     t = 0.
     fspac = None
     f = None
+    fr = None
     a = None
     b1 = None
     b2 = None
@@ -42,6 +43,8 @@ class GFNNLayer(NeuronLayer):
                 'min': .5,
                 'max': 8
             }
+        freqDist['min_r'] = freqDist['min'] * 2 * np.pi
+        freqDist['max_r'] = freqDist['max'] * 2 * np.pi
 
         self.conns = []
 
@@ -61,6 +64,7 @@ class GFNNLayer(NeuronLayer):
         elif self.fspac == 'log':
             f = np.logspace(np.log10(freqDist['min']), np.log10(freqDist['max']), self.dim)
         self.f = np.float32(f)
+        self.fr = np.float32(f*2*np.pi)
         self.setOscParams()
 
     def setOscParams(self, params=None):
@@ -116,7 +120,6 @@ class GFNNLayer(NeuronLayer):
             return np.complex64
         return None
 
-
     def _resetBuffers(self, length=1):
         """Reset buffers to a length (in time dimension) of 1."""
         for buffername, dim in self.bufferlist:
@@ -156,6 +159,58 @@ class GFNNLayer(NeuronLayer):
 
     def _backwardImplementation(self, outerr, inerr, outbuf, inbuf):
         inerr[:] = 0
+
+class AFNNLayer(GFNNLayer):
+    """
+    Adaptive Frequency Neural Network layer
+    """
+
+    f0 = None
+    fr0 = None
+    e_f = 1.0
+
+    def __init__(self, dim, oscParams=None, freqDist=None, name=None):
+        """Create a layer with dim number of units."""
+        GFNNLayer.__init__(self, dim, oscParams=oscParams, freqDist=freqDist, name=name)
+
+        self.f0 = self.f.copy()
+        self.fr0 = self.fr.copy()
+        self.fr_max = np.roll(self.fr0, -1) * 1.2
+        self.fr_max[-1] = self.fr0[-1] * 2
+        self.fr_min = np.roll(self.fr0, 1) / 1.2
+        self.fr_min[0] = self.fr[0] / 2
+
+    def reset(self, randomiseOscs=True):
+        self.f[:] = self.f0
+        self.fr[:] = self.f * 2 * np.pi
+        self.updateOscParams()
+        if self.hasLearnableConn():
+            for c in self.conns:
+                c.updateLearnParams()
+        super(AFNNLayer, self).reset(randomiseOscs)
+
+    def updateOscParams(self):
+        p = self.oscParams
+        if self.fspac == 'lin':
+            self.a[:]  = p['a'] + 1j * self.fr
+        elif self.fspac == 'log':
+            self.a[:]  = (p['a'] + 1j * 2 * np.pi) * self.f
+            self.b1[:] = (p['b1'] + 1j*p['d1']) * self.f
+            self.b2[:] = (p['b2'] + 1j*p['d2']) * self.f
+            self.w[:] = self.f
+
+    def _forwardImplementation(self, inbuf, outbuf):
+        super(AFNNLayer, self)._forwardImplementation(inbuf, outbuf)
+        extin = inbuf[:self.dim]
+        # update frequencies
+        zprev = self.getZ()
+        self.fr[:] = rk4(self.t-self.dt, self.fr, self.dt, fdot, zprev, self, extin)
+        self.fr[:] = np.minimum(np.maximum(self.fr, self.fr_min), self.fr_max)
+        self.f[:] = self.fr / (2*np.pi)
+        self.updateOscParams()
+        if self.hasLearnableConn():
+            for c in self.conns:
+                c.updateLearnParams()
 
 if __name__ == "__main__":
     from pybrain.tests import runModuleTestSuite

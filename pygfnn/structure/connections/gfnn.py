@@ -78,17 +78,25 @@ class GFNNIntConnection(Connection):
         self.randomize()
         self.reset()
 
+    def getFreqSpace(self):
+        n1 = self.inmod
+        n2 = self.outmod
+
+        f1 = np.tile(n1.f, (n2.outdim, 1))
+        f2 = np.tile(n2.f, (n1.outdim, 1)).T
+        if self.type == 'allfreq':
+            # Full series of resonant monomials
+            return 2 * f1 * f2 / (f1 + f2)
+        return 1.
+
+
     def setLearnParams(self, learnParams):
         n1 = self.inmod
         n2 = self.outmod
 
         self.type = learnParams['type']
 
-        f1 = np.tile(n1.f, (n2.outdim, 1))
-        f2 = np.tile(n2.f, (n1.outdim, 1)).T
-        if self.type == 'allfreq':
-            # Full series of resonant monomials
-            f = 2 * f1 * f2 / (f1 + f2)
+        f = self.getFreqSpace()
 
         if n2.fspac == 'log':
             self.f = f
@@ -108,6 +116,19 @@ class GFNNIntConnection(Connection):
         self.learn = learnParams['learn']
         self.e = np.complex64(learnParams['e'])
         self.roote = np.sqrt(self.e)
+
+    def updateLearnParams(self):
+        n2 = self.outmod
+
+        p = self.learnParams
+        if n2.fspac == 'log':
+            f = self.getFreqSpace()
+            self.f[:] = f
+            self.w[:] = p['w'] * n2.f
+            self.l[:] = p['l'] * f
+            self.m1[:] = p['m1'] * f
+            self.m2[:] = p['m2'] * f
+            self.k[:] = p['k'] * f
 
     def randomize(self):
         # FullNotSelfConnection.randomize(self)

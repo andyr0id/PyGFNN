@@ -9,7 +9,7 @@ def freqs2labels(startF, endF):
     while ticks[-1] < endF:
         ticks.append(ticks[-1]*2)
         pass
-    labels = [str(x) for x in ticks]
+    labels = [("%.2f" % x) for x in ticks]
     return ticks, labels
 
 def plotOutput(Y, T):

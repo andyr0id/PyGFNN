@@ -120,9 +120,10 @@ def extActivation(w, x, z, roote):
 def intActivation(w, c, zi, zj, roote):
     return w * np.dot(c, xOverExp(roote, zj)) * oneOverExp(roote, np.conj(zi))
 
-def zdot(t, z, m, extin, conns=None):
-    # stimulus: external and internal
-    x_ext = extActivation(m.w, extin, z, m.roote)
+def extStimulus(z, m, extin):
+    return extActivation(m.w, extin, z, m.roote)
+
+def intStimulus(z, m, conns=None):
     x_int = 0
     for i in range(len(m.conns)):
         conn = m.conns[i]
@@ -132,6 +133,12 @@ def zdot(t, z, m, extin, conns=None):
             c = conn.c
         zi = conn.inmod.getZ()
         x_int += intActivation(conn.w, c, zi, z, conn.roote)
+    return x_int
+
+def zdot(t, z, m, extin, conns=None):
+    # stimulus: external and internal
+    x_ext = extStimulus(z, m, extin)
+    x_int = intStimulus(z, m, conns)
     x = x_ext + x_int
 
     # cannonical model
@@ -150,6 +157,12 @@ def cdot(t, c, conn, zi, zj):
     div = np.divide(conn.e * conn.m2 * abc_4, 1 - conn.e * abc_2)
     dcdt = c * (conn.l + conn.m1 * abc_2 + div) + x
     return dcdt
+
+def fdot(t, f, z, m, extin):
+    #s = o/h or: sin = im(z) / abs(z)
+    abz = np.abs(z)
+    dfdt = m.w * (-m.e_f/abz) * np.abs(extin) * (np.imag(z) / abz)
+    return dfdt
 
 def limitC(c, roote):
     maxAmp = np.real(1./roote)
