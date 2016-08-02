@@ -16,6 +16,7 @@ import pygfnn.tools.shortcuts as gfnn
 import numpy as np
 import timeit
 import matplotlib.pyplot as plt
+from matplotlib import rc
 
 def plotPhases(t, net, inp, out, adaptive=True):
     fig1 = plt.figure()
@@ -65,13 +66,15 @@ def plotPhases(t, net, inp, out, adaptive=True):
 def plotFrequencies(t, net, fs, adaptive=True):
     gfnn = net['h']
     fig1 = plt.figure()
-    plt.title('Frequencies over time')
-    plt.plot(t, fs)
-    plt.plot([t[0], t[-1]], [f, f], '0.5', linestyle='dashed')
+    plt.title('Adaptive Frequencies')
+    plt.xlabel("Time (s)")
+    plt.ylabel("Frequency (Hz)")
+    plt.plot(t, fs, 'b')
+    plt.plot([t[0], t[-1]], [f, f], 'r-.')
     ax1 = plt.gca()
     ax1.set_yscale('log')
     if adaptive:
-        fmin, fmax = (gfnn.fr_min[0]/(np.pi*2), gfnn.fr_max[-1]/(np.pi*2))
+        fmin, fmax = (gfnn.fr_min/(np.pi*2), gfnn.fr_max/(np.pi*2))
     else:
         freqDist = net['h'].freqDist
         fmin, fmax = (freqDist['min'], freqDist['max'])
@@ -82,9 +85,12 @@ def plotFrequencies(t, net, fs, adaptive=True):
     return fig1
 
 if __name__ == '__main__':
+    font = {'family': 'serif', 'size': 14}
+    rc('font', **font)
+
     # Choose network parameters (see pygfnn.tools.shortcuts for more)
     oscParams = gfnn.OSC_CRITICAL
-    freqDist = { 'fspac': 'log', 'min': 0.5, 'max': 8 }
+    freqDist = { 'fspac': 'log', 'min': 1.0, 'max': 8 }
     fs = 40.
 
     # Make network - can have a much lower dimensionality than normal GFNNs
@@ -92,16 +98,18 @@ if __name__ == '__main__':
     n = gfnn.buildGFNN(dim, fs = fs, oscParams = oscParams, freqDist = freqDist,
         outConn = AbsPhaseIdentityConnection, outDim = dim*2, adaptive=True)
     # setting the epsilon for the frequency changes (default=1)
-    n['h'].e_f = .25
+    n['h'].e_f = 1.
+    n['h'].e_h = 2.
 
     # for comparison, o normal GFNN
     n2 = gfnn.buildGFNN(dim, fs = fs, oscParams = oscParams, freqDist = freqDist,
         outConn = AbsPhaseIdentityConnection, outDim = dim*2)
 
     # Stimulus - 40 seconds of sine wave
-    end = 20.
+    end = 40.
     t = np.arange(0, end, n['h'].dt)
     f = 1 + np.random.random() * 3
+    f = 2.467
     # f = 2.
     x = np.sin(2 * np.pi * f * t) * 0.25
 

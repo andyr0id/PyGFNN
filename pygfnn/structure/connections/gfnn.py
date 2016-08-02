@@ -34,13 +34,13 @@ class GFNNIntConnection(Connection):
     type = None
     f = None
     learn = False
-    w = None
-    l = None
-    m1 = None
-    m2 = None
-    e = None
-    roote = None
-    k = None
+    w = 0.05
+    l = 0
+    m1 = -1
+    m2 = -50
+    e = 4
+    roote = 2
+    k = 1
     c0 = None
     c = None
     mask = 1
@@ -58,7 +58,8 @@ class GFNNIntConnection(Connection):
         if learnParams is None:
             learnParams = {'learn': True, 'w': 0.05, 'l': 0, 'm1': -1, 'm2': -50, 'e': 4, 'k': 1 } # Critical learning rule
 
-        learnParams['type'] = 'allfreq' # only supported type for now
+        if 'type' not in learnParams:
+            learnParams['type'] = 'allfreq'
 
         self.setArgs(learnParams=learnParams, c0=c0)
         self.setLearnParams(learnParams)
@@ -101,21 +102,28 @@ class GFNNIntConnection(Connection):
         if n2.fspac == 'log':
             self.f = f
             self.w = learnParams['w'] * n2.f
-            self.l = learnParams['l'] * f
-            self.m1 = learnParams['m1'] * f
-            self.m2 = learnParams['m2'] * f
-            self.k = learnParams['k'] * f
+            if learnParams['learn']:
+                self.l = learnParams['l']
+                self.m1 = learnParams['m1']
+                self.m2 = learnParams['m2']
+                self.k = learnParams['k']
+            self.l *= f
+            self.m1 *= f
+            self.m2 *= f
+            self.k *= f
         else:
             self.f = np.ones(np.size(f))
             self.w = learnParams['w']
-            self.l = learnParams['l']
-            self.m1 = learnParams['m1']
-            self.m2 = learnParams['m2']
-            self.k = learnParams['k']
+            if learnParams['learn']:
+                self.l = learnParams['l']
+                self.m1 = learnParams['m1']
+                self.m2 = learnParams['m2']
+                self.k = learnParams['k']
 
         self.learn = learnParams['learn']
-        self.e = np.complex64(learnParams['e'])
-        self.roote = np.sqrt(self.e)
+        if learnParams['learn']:
+            self.e = np.complex64(learnParams['e'])
+            self.roote = np.sqrt(self.e)
 
     def updateLearnParams(self):
         n2 = self.outmod

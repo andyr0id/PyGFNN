@@ -18,7 +18,7 @@ def plotOutput(Y, T):
     plt.show()
     return fig1
 
-def ampx(Z, dt, startF, endF, fig1=None):
+def ampx(Z, dt, startF, endF, fig1=None, cmap='jet'):
     if fig1 is not None:
         plt.figure(fig1.number)
     else:
@@ -27,7 +27,7 @@ def ampx(Z, dt, startF, endF, fig1=None):
     startT = 0
     endT = len(Z)*dt
     im1 = plt.imshow(np.flipud(np.abs(Z).T), extent=[startT,endT,startF,endF],
-        aspect='auto', interpolation='nearest')
+        aspect='auto', interpolation='nearest', cmap=cmap)
     ax1 = plt.gca()
     ax1.set_yscale('log')
     ticks, labels = freqs2labels(startF, endF)

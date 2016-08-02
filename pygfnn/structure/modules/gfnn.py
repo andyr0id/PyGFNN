@@ -2,10 +2,11 @@ __author__ = 'Andrew J. Lambert, andy@andyroid.co.uk'
 
 from pybrain.structure.modules.neuronlayer import NeuronLayer
 from pybrain.structure.modules.module import Module
-from pygfnn.tools.gfnn import fdot, zdot, spontAmp, rk4, zcrk4, limitC
+from pygfnn.tools.gfnn import *
 
 import numpy as np
 
+TWO_PI = 2 * np.pi
 
 class GFNNLayer(NeuronLayer):
     """
@@ -43,8 +44,8 @@ class GFNNLayer(NeuronLayer):
                 'min': .5,
                 'max': 8
             }
-        freqDist['min_r'] = freqDist['min'] * 2 * np.pi
-        freqDist['max_r'] = freqDist['max'] * 2 * np.pi
+        freqDist['min_r'] = freqDist['min'] * TWO_PI
+        freqDist['max_r'] = freqDist['max'] * TWO_PI
 
         self.conns = []
 
@@ -64,7 +65,7 @@ class GFNNLayer(NeuronLayer):
         elif self.fspac == 'log':
             f = np.logspace(np.log10(freqDist['min']), np.log10(freqDist['max']), self.dim)
         self.f = np.float32(f)
-        self.fr = np.float32(f*2*np.pi)
+        self.fr = np.float32(f*TWO_PI)
         self.setOscParams()
 
     def setOscParams(self, params=None):
@@ -73,12 +74,12 @@ class GFNNLayer(NeuronLayer):
         if self.oscParams is not None:
             p = self.oscParams
             if self.fspac == 'lin':
-                self.a  = p['a'] + 1j * 2 * np.pi * self.f
+                self.a  = p['a'] + 1j * TWO_PI * self.f
                 self.b1 = p['b1'] + 1j * p['d1']
                 self.b2 = p['b2'] + 1j * p['d2']
                 self.w = 1
             elif self.fspac == 'log':
-                self.a  = (p['a'] + 1j * 2 * np.pi) * self.f
+                self.a  = (p['a'] + 1j * TWO_PI) * self.f
                 self.b1 = (p['b1'] + 1j*p['d1']) * self.f
                 self.b2 = (p['b2'] + 1j*p['d2']) * self.f
                 self.w = self.f
@@ -112,8 +113,8 @@ class GFNNLayer(NeuronLayer):
         r = spontAmp(np.real(self.a[0]), np.real(self.b1[0]), np.real(self.b2[0]), self.e)
         r0 = r[-1] + r0
         r0 = r0 + .01 * np.random.randn(np.size(r0))
-        phi0 = 2 * np.pi * np.random.randn(np.size(r0))
-        self.z0[:] = np.complex64(r0 * np.exp(1j * 2 * np.pi * phi0))
+        phi0 = TWO_PI * np.random.randn(np.size(r0))
+        self.z0[:] = np.complex64(r0 * np.exp(1j * TWO_PI * phi0))
 
     def _getDtype(self, buffername):
         if buffername == 'outputbuffer' or buffername == 'inputbuffer':
@@ -168,6 +169,8 @@ class AFNNLayer(GFNNLayer):
     f0 = None
     fr0 = None
     e_f = 1.0
+    e_h = 0.03
+    fkSteps = None
 
     def __init__(self, dim, oscParams=None, freqDist=None, name=None):
         """Create a layer with dim number of units."""
@@ -175,42 +178,51 @@ class AFNNLayer(GFNNLayer):
 
         self.f0 = self.f.copy()
         self.fr0 = self.fr.copy()
-        self.fr_max = np.roll(self.fr0, -1) * 1.2
-        self.fr_max[-1] = self.fr0[-1] * 2
-        self.fr_min = np.roll(self.fr0, 1) / 1.2
-        self.fr_min[0] = self.fr[0] / 2
+        self.fr_max = self.fr0[-1]
+        self.fr_min = self.fr0[0]
+        self.fupdate = np.floor(self.fs*0.3)
+        self.fkSteps = np.zeros((4, dim), dtype=np.float32)
 
     def reset(self, randomiseOscs=True):
         self.f[:] = self.f0
-        self.fr[:] = self.f * 2 * np.pi
+        self.fr[:] = self.f * TWO_PI
         self.updateOscParams()
-        if self.hasLearnableConn():
-            for c in self.conns:
-                c.updateLearnParams()
         super(AFNNLayer, self).reset(randomiseOscs)
 
-    def updateOscParams(self):
+    def updateOscParams(self, fullUpdate=True):
         p = self.oscParams
         if self.fspac == 'lin':
             self.a[:]  = p['a'] + 1j * self.fr
         elif self.fspac == 'log':
-            self.a[:]  = (p['a'] + 1j * 2 * np.pi) * self.f
-            self.b1[:] = (p['b1'] + 1j*p['d1']) * self.f
-            self.b2[:] = (p['b2'] + 1j*p['d2']) * self.f
+            self.a[:]  = (p['a'] + 1j * TWO_PI) * self.f
+            if fullUpdate:
+                self.b1[:] = (p['b1'] + 1j*p['d1']) * self.f
+                self.b2[:] = (p['b2'] + 1j*p['d2']) * self.f
             self.w[:] = self.f
-
-    def _forwardImplementation(self, inbuf, outbuf):
-        super(AFNNLayer, self)._forwardImplementation(inbuf, outbuf)
-        extin = inbuf[:self.dim]
-        # update frequencies
-        zprev = self.getZ()
-        self.fr[:] = rk4(self.t-self.dt, self.fr, self.dt, fdot, zprev, self, extin)
-        self.fr[:] = np.minimum(np.maximum(self.fr, self.fr_min), self.fr_max)
-        self.f[:] = self.fr / (2*np.pi)
-        self.updateOscParams()
-        if self.hasLearnableConn():
+        if fullUpdate and self.hasLearnableConn():
             for c in self.conns:
                 c.updateLearnParams()
+
+    def _forwardImplementation(self, inbuf, outbuf):
+        extin = inbuf[:self.dim]
+        # update frequencies
+
+
+        if self.hasLearnableConn():
+            z, fr, conns = zfcrk4(self.t, self.dt, self, extin)
+            for i in range(len(self.conns)):
+                # self.conns[i].c[:] = limitC(np.reshape(conns[i], self.conns[i].c.shape), self.conns[i].roote)
+                self.conns[i].c[:] = conns[i]
+        else:
+            z, fr = zfrk4(self.t, self.dt, self, extin)
+
+        self.fr[:] = np.minimum(np.maximum(fr, self.fr_min), self.fr_max)
+        self.f[:] = self.fr / TWO_PI
+        self.updateOscParams(self.offset % self.fupdate == 0)
+
+
+        self.t += self.dt
+        outbuf[:] = z
 
 if __name__ == "__main__":
     from pybrain.tests import runModuleTestSuite

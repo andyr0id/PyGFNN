@@ -137,9 +137,8 @@ def intStimulus(z, m, conns=None):
 
 def zdot(t, z, m, extin, conns=None):
     # stimulus: external and internal
-    x_ext = extStimulus(z, m, extin)
-    x_int = intStimulus(z, m, conns)
-    x = x_ext + x_int
+    x = extStimulus(z, m, extin) \
+        + intStimulus(z, m, conns)
 
     # cannonical model
     abz = np.abs(z)
@@ -161,8 +160,95 @@ def cdot(t, c, conn, zi, zj):
 def fdot(t, f, z, m, extin):
     #s = o/h or: sin = im(z) / abs(z)
     abz = np.abs(z)
-    dfdt = m.w * (-m.e_f/abz) * np.abs(extin) * (np.imag(z) / abz)
-    return dfdt
+    abx = np.abs(extin)
+    if np.any(abx):
+        dfdt = -m.e_f * abx * np.imag(z) * np.power(abz, -2)
+    else:
+        dfdt = 0.0
+    dfdt -= m.e_h * ((f - m.fr0) / m.fr0)
+    return m.w * dfdt
+
+def zfrk4(t0, h, m, extin):
+    z0 = m.getZ()
+    f0 = m.fr
+
+    z = z0.copy()
+    f = f0.copy()
+
+    t = t0
+    for kx in xrange(4):
+        m.kSteps[kx][:] = h * zdot(t, z, m, extin)
+        m.fkSteps[kx][:] = h * fdot(t, f, z, m, extin)
+
+        if kx == 0 or kx == 1:
+            z[:] = z0 + m.kSteps[kx]/2
+            f[:] = f0 + m.fkSteps[kx]/2
+
+            if kx == 0:
+                t = t0 + h/2
+        elif kx == 2:
+            z[:] = z0 + m.kSteps[kx]
+            f[:] = f0 + m.fkSteps[kx]
+
+            t = t0 + h
+
+    z[:] = z0 + (m.kSteps[0] + 2*m.kSteps[1] + 2*m.kSteps[2] + m.kSteps[3])/6
+    f[:] = f0 + (m.fkSteps[0] + 2*m.fkSteps[1] + 2*m.fkSteps[2] + m.fkSteps[3])/6
+
+    return z, f
+
+def zfcrk4(t0, h, m, extin):
+    z0 = m.getZ()
+    f0 = m.fr
+    nConns = len(m.conns)
+    conns0 = np.zeros((nConns, len(z0), len(z0)), np.complex64)
+    for i in xrange(nConns):
+        conns0[i][:] = m.conns[i].c
+
+    z = z0.copy()
+    zi = z0.copy()
+    f = f0.copy()
+    conns = conns0.copy()
+    wconn = np.zeros((len(z0), len(z0)), np.complex64)
+
+    t = t0
+    for kx in xrange(4):
+        m.kSteps[kx][:] = h * zdot(t, z, m, extin, conns)
+        m.fkSteps[kx][:] = h * fdot(t, f, z, m, extin)
+
+        for i in xrange(nConns):
+            if m.conns[i].learn:
+                wconn[:] = conns[i]
+                zi[:] = m.conns[i].inmod.getZ()
+                m.conns[i].kSteps[kx][:] = h * cdot(t, wconn, m.conns[i], zi, z)
+            else:
+                m.conns[i].kSteps[kx][:] = 0
+
+        if kx == 0 or kx == 1:
+            z[:] = z0 + m.kSteps[kx]/2
+            f[:] = f0 + m.fkSteps[kx]/2
+
+            for i in xrange(nConns):
+                conns[i] = conns0[i] + m.conns[i].kSteps[kx]/2
+
+            if kx == 0:
+                t = t0 + h/2
+        elif kx == 2:
+            z[:] = z0 + m.kSteps[kx]
+            f[:] = f0 + m.fkSteps[kx]
+
+            for i in xrange(nConns):
+                conns[i] = conns0[i] + m.conns[i].kSteps[kx]
+
+            t = t0 + h
+
+    z[:] = z0 + (m.kSteps[0] + 2*m.kSteps[1] + 2*m.kSteps[2] + m.kSteps[3])/6
+    f[:] = f0 + (m.fkSteps[0] + 2*m.fkSteps[1] + 2*m.fkSteps[2] + m.fkSteps[3])/6
+
+    for i in xrange(nConns):
+        conns[i][:] = conns0[i] + (m.conns[i].kSteps[0] + 2*m.conns[i].kSteps[1] + 2*m.conns[i].kSteps[2] + m.conns[i].kSteps[3])/6
+
+    return z, f, conns
 
 def limitC(c, roote):
     maxAmp = np.real(1./roote)
